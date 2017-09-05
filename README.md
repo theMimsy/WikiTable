@@ -4,7 +4,7 @@
 
 Do you have an HTML table (or a bunch of them) that you want to convert into a neater format for analysis or visualization? Does this table contain column spans and row spans that make it hard to parse using existing libraries? Furthermore, does the table contain links to other URLs that you wish you could automatically integrate into the final output? If so, allow me to introduce `WikiTable`, a simple `bs4`-based parser for all your table parsing needs (well, not yet, see above *WARNING*).
 
-## How it Works:
+## How it Works
 
 The best way to demonstrate how to use the package is with an example. Say you want to extract an HTML table from a specific URL (for example a WikiPedia table) that contains rowspans and internal links. Say, a table that maps animals to their habitats:
 
@@ -146,7 +146,7 @@ table_df.columns = ['Animal Habitat', 'Animal Name', 'Conservation Status']
 table_df.to_csv('animal_conservation.csv', index = False, quoting = csv.QUOTE_ALL)
 ```
 
-The call that actually start the parsing is `animal_table.pandas_from_url()`. This function follows the given `URL` (which is actually this very page, so meta), looks for the second table on the page (the table I showed above), and begins extracting. When it gets to the second column of the table, it looks for links and start parsing using the information provided to `conservation_table`.
+The line that actually initiates the parsing is `animal_table.pandas_from_url()`. This function call follows the given `URL` (which is actually the page you're reading right now, so meta), looks for the second table on the page (the table I showed above), and begins extraction. When it gets to the second column of the table, it looks for links and start parsing using the information provided to `conservation_table`; this is a recursive call.
 
 The output of the script is given saved into [this csv file](https://github.com/theMimsy/WikiTable/tree/master/examples/animal_conservation.csv)
 
