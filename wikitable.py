@@ -40,7 +40,7 @@ class WikiTableOptions(dict):
         'col_th'   : False, 'row_th'   : False,
         'col_ex'   : None,  'row_ex'   : None,
         'col_ref'  : [],    'row_ref'  : [],
-        'regex_ex' : None,  'regex_pos': None,
+        'regex_ex' : None,  'regex_pos': None,  'regex_max': None,
         'on_link'  : None
     }
 
@@ -121,7 +121,7 @@ class WikiTable:
     def __init__(self, **kwargs):
         '''
         Initializes the parser object. If options are passed during construction, they are merged
-        into a
+        into the default options.
         '''
         self._options = WikiTableOptions(kwargs)
 
@@ -196,19 +196,24 @@ class WikiTable:
 
         for rex, pos in zip(regex_ex, regex_pos):
 
-            # Get boolean dataframe
+            # Find all matches to given regex and represent it using Boolean DataFrame
             result_df = pd.DataFrame()
-            for col_idx in data_df: 
+            for col_idx in data_df:
                 result_col = data_df[col_idx].str.contains(rex)
                 result_df[col_idx] = result_col
 
+            # Create a list of (row, col) index pairs for every match
             true_list = []
             for col_idx in result_df:
                 row_idx_list = result_df.loc[result_df[col_idx] == True].index
                 true_list = true_list + [(row_idx, col_idx) for row_idx in row_idx_list]
 
+            # Adjust this list by the values given in `regex_pos`
             extract_list = [(orig[0] + pos[0], orig[1] + pos[1]) for orig in true_list]
             
+            # Remove unwanted values as specified by `regex_max`
+            extract_list = extract_list[0:options.regex_max]
+
             for row_ex, col_ex in extract_list:
                 to_extract.append(data_df.loc[row_ex, col_ex])
 
@@ -431,7 +436,7 @@ class WikiTable:
 
                 # Add to links
                 linked_data = linked_data + self._handle_links(row_idx, col_idx, td_soup, options)
-        
+
             yield to_yield + linked_data
 
     def _generate_extracted_body(self, body_generator, options):

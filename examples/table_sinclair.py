@@ -17,7 +17,7 @@ import csv
 import re
 
 # Custom parsing import
-from ../wikitable import WikiTable
+from wikitable import WikiTable
 
 def get_sinclair_wiki_table(table_number):
     '''
@@ -32,6 +32,7 @@ def get_sinclair_wiki_table(table_number):
         tab_fil = {'class' : 'infobox'}, # Recursive lookup only in the infoboxes on Wikipedia
         tab_num = 0,                     # Always look at the first infobox (there should only be one)
         regex_ex = ['Transmitter.*'],    # Look for cells in the infobox that match this regex
+        regex_max = 1,                   # If there is more than one match, only take one
         regex_pos = [(0, 1)]             # If a regex match is found, extract the cell to the right
                                          # extract_row = match_row + 0 and extract_col = match_col + 1
     )

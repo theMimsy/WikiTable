@@ -6,7 +6,7 @@ Do you have an HTML table (or a bunch of them) that you want to convert into a n
 
 ## How it Works:
 
-The best way to demonstrate how to use the package is with an example. Say you want to extract a HTML table from a specific URL (for example a WikiPedia table) that contains rowspans and internal links. Say, a table that maps animals to their habitats:
+The best way to demonstrate how to use the package is with an example. Say you want to extract an HTML table from a specific URL (for example a WikiPedia table) that contains rowspans and internal links. Say, a table that maps animals to their habitats:
 
 <table class="animal-table">
   <tr>
@@ -61,7 +61,7 @@ The code for the table above (with `<a></a>` tags removed for simplicity) might 
 ```
 Notice that this table utilizes the `rowspan` option to make "Sahara" and "Tibet" span across multiple rows.
 
-Now that we've seen the input for our example lets take a look at the output. We want a `pandas.DataFrame` object that looks as follows:
+Now that we've seen the input for our example lets take a look at the desired output. We want a `pandas.DataFrame` object that looks as follows:
 
 <table>
   <tr>
@@ -97,7 +97,59 @@ Now that we've seen the input for our example lets take a look at the output. We
 </table>
 
 Two important details:
-- The rowspans were handled correctly.
+- The rowspans were handled correctly and expanded into their correct rows.
 - There is now an additional column called `Conservation Status`. This column was extracted from the links in the original table.
 
-Most libraries that attempt to accomplish something like (including `pandas`) would fail to do it correctly. It is the purpose of this small package to solve the `rowspan`/`colspan` problem as well as provide a bit of additional functionality (extracting information from internal links).
+Most libraries that attempt to accomplish something like this (including `pandas`) would fail to do it correctly. It is the purpose of this small package to solve the `rowspan`/`colspan` problem as well as provide a bit of additional functionality (extracting information from internal links).
+
+### The Code
+
+I've provided that code that accomplishes the above in the [examples directory](https://github.com/theMimsy/WikiTable/tree/master/examples). For the lazy, here's a copy of the animal script:
+
+```python
+# Data manipulation import
+import numpy as np
+import pandas as pd
+import csv
+
+# Custom table parsing import
+from wikitable import WikiTable
+
+URL = 'https://github.com/theMimsy/WikiTable'
+
+# Recursive lookup
+conservation_table = WikiTable(
+    tab_fil = {'class' : 'infobox'},    # When following links, look for at the WikiPedia infoboxes
+    tab_num = 0,                        # Always look at the first infobox (should only be one)
+    regex_ex = ['Conservation status'], # Look for cells in infobox that match this regex
+    regex_max = 1,                      # If there is more than one match, only take the first
+    regex_pos = [(1, 0)]                # If a regex match is found, extract the cell to the below
+                                        # extract_row = match_row + 1, extract_col = match_col + 0
+)
+
+# Root lookup
+animal_table = WikiTable(
+    url = URL,                    # Path to the main HTML table
+    tab_num = 1,                  # We want the second table on the page (`index = 1`)
+    col_ref = [1],                # The second column (`col = 1`) has links for recursion
+    col_th = True,                # The first row of the table is a header
+    on_link = conservation_table  # What to extract when we come across a link
+)
+
+# Gather data
+table_df = animal_table.pandas_from_url()
+
+# Fix up column names
+table_df.columns = ['Animal Habitat', 'Animal Name', 'Conservation Status']
+
+# Save the data into a csv file
+table_df.to_csv('animal_conservation.csv', index = False, quoting = csv.QUOTE_ALL)
+```
+
+The call that actually start the parsing is `animal_table.pandas_from_url()`. This function follows the given `URL` (which is actually this very page, so meta), looks for the second table on the page (the table I showed above), and begins extracting. When it gets to the second column of the table, it looks for links and start parsing using the information provided to `conservation_table`.
+
+The output of the script is given saved into [this csv file](https://github.com/theMimsy/WikiTable/tree/master/examples/animal_conservation.csv)
+
+## How to Install
+
+Since this package is still being worked on (and expected to change dramatically), I suggest simply cloning the repository of even copy-pasting the code.
